@@ -145,7 +145,7 @@ Play with different options, you should notice that the summary and table update
 We should notice that in this simple example, we have code duplication:
 `dataset <- get(input$dataset, "package:datasets")`
 
-In traditional R scripting, we use two techniques to deal with duplicated code: either we **capture the value using a variable**, or **capture the computation with a function**. Unfortunately **neither of these approaches work here**, reasons will be explaied in the end of the chapter. So we need a new mechanism: **reactive expressions**.
+In traditional R scripting, we use two techniques to deal with duplicated code: either we **capture the value using a variable**, or **capture the computation with a function**. Unfortunately **neither of these approaches work here**, reasons will be explaied in the next section. So we need a new mechanism: **reactive expressions**.
 
 You create a reactive expression by:
 - wrapping a block of code in `reactive({...})`.
@@ -180,4 +180,154 @@ server <- function(input, output, session) {
   })
 }
 ```
+
+# Why do we need reactive programming?
+
+Reactive programming is a style of programming that focuses on values that change over time, and calculations and actions that depend on those values.This is quite different from most R code, which typically deals with fairly static data.
+
+For Shiny apps to be maximally useful, we need reactive expressions and outputs to update **if and only if** their inputs change. *We want outputs to stay in sync with inputs, while ensuring that we never do more work than necessary*.
+
+## Why can't you use variables?
+
+Variables in R represent values and they can change over time, but they’re not designed to help you when they change.
+
+Take this simple example of converting a temperature from Celsius to Fahrenheit:
+
+```{r}
+temp_c <- 10
+temp_f <- (temp_c * 9 / 5) + 32
+temp_f
+#> [1] 50
+```
+
+When we change `temp_c`, it doesn't affect `temp_f`; unless we do the computation again:
+
+```{r}
+temp_c <- 30
+temp_f
+#> [1] 50
+
+temp_f <- (temp_c * 9 / 5) + 32
+temp_f
+#> [1] 82
+```
+
+So, Variables can change over time, but they never change automatically.
+
+## How about functions?
+
+Try to solve this problem with a function:
+
+```{r}
+temp_c <- 10
+temp_f <- function() {
+message("Converting")
+(temp_c * 9 / 5) + 32
+}
+temp_f()
+#> Converting
+#> [1] 26.6
+```
+
+This solves the first problem that reactivity is trying to solve: whenever you access `temp_f()` you get the latest computation:
+
+```{r}
+temp_c <- -3
+temp_f()
+#> Converting
+#> [1] 26.6
+```
+
+It doesn’t, however, minimise computation. Every time you call `temp_f()` it recomputes, even if `temp_c` hasn’t changed. And **needlessly repeating is unnecessary: if the inputs haven't changed, why do we need to recompute the output?**
+
+## Reactive programming
+
+Reactive programming elegantly solves both problems by combining features of the solutions above.
+
+In Shiny, we create a reactive value with `reactiveVal()`. A reactive value has special syntax for getting its value (calling it like a zero-argument function) and setting its value (set its value by calling it like a one-argument function).
+
+```{r}
+temp_c <- reactiveVal(10) # create
+temp_c() # get
+#> [1] 10
+temp_c(20) # set
+temp_c() # get
+#> [1] 20
+```
+
+Now we can create a reactive expression that depends on this value:
+
+```{r}
+temp_f <- reactive({
+  message("Converting")
+  (temp_c() * 9 / 5) + 32
+})
+temp_f()
+#> Converting
+#> [1] 68
+```
+
+A reactive expression automatically tracks all of its dependencies. So that later, if `temp_c`
+changes, `temp_f` will automatically update:
+
+```{r}
+temp_c(-3)
+temp_c(-10)
+temp_f()
+#> Converting
+#> [1] 14
+```
+
+But if `temp_c()` hasn’t changed, then `temp_f()` doesn’t need to recompute , and can just be retrieved from the cache:
+
+```{r}
+temp_f()
+#> [1] 14
+```
+
+A reactive expression has two important properties:
+
+- It’s lazy: it doesn’t do any work until it’s called.
+- It’s cached: it doesn’t do any work the second and subsequent times it’s called because it caches the previous result.
+
+More details will be learned in a later chapter.
+
+
+# Exercises
+1. Create an app that greets the user by name. You don’t know all the functions you need to do this yet, so I’ve included some lines of code below. Think about which lines you’ll use and then copy and paste them into the right place in a Shiny app.
+
+```{r}
+tableOutput("mortgage")
+output$greeting <- renderText({
+  paste0("Hello ", input$name)
+})
+numericInput("age", "How old are you?", value = NA)
+textInput("name", "What's your name?")
+textOutput("greeting")
+output$histogram <- renderPlot({
+  hist(rnorm(1000))
+}, res = 96)
+```
+
+**Solution:**
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  textInput("name", "What's your name?"),
+  textOutput("greeting")
+)
+
+server <- function(input, output, session) {
+  output$greeting <- renderText({
+  paste0("Hello ", input$name)
+})
+}
+
+shinyApp(ui, server)
+```
+
+
+
 
