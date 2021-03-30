@@ -1,0 +1,109 @@
+---
+title: "Chapter 2. Basic UI"
+author: Zhenhua Xu
+output: 
+  html_notebook:
+    toc: true
+    number_sections: true
+---
+
+***This is the study note following reading the book "Mastering Shiny" by Hadley Wickham.***
+
+# Introduction
+
+From the first chapter, we can tell that Shiny encourages separation of the code that generates the user interface (the front end) from the code that drives the app's behaviour (the back end).
+
+In this chapter, we'll focus on the front end, to explore the HTML inputs and outputs provided by Shiny. So that we would be able to have the ability to capture many types of data and display many types of R output.
+
+Most of the examples will be stick to the Shiny built-in input and output. However, there is a rich and vibrant community of extension packages like **shinyWidgets**, **colorpicker**, and **sorttable**. A comprehensive, actively-maintained list of other packages can also be found at https://github.com/nanxstats/awesome-shiny-extensions
+
+As usual, we begin by loading the shiny package:
+```{r}
+library(shiny)
+```
+
+# Inputs
+
+So far, we have seen functions like `sliderInput()`, `selectInput()`, and textInput()` that we use to insert input controls into the UI. Let's see the common structure that underlies all input funtions and give a quick overview of the inputs built into Shiny.
+
+## Common structure
+
+All input functions have the same **first argument: `inputId`**, this is **the identifier used to connect the front end with the back end**. For example, if the UI has an input with ID `"name"`, then the server function will access it with `input$name`.
+
+**Two constraints for `inputId`:**
+
+- **Must be a simple string that contains only letters, numbers and underscore. Try to name it with sense.**
+- **Must be unique. Otherwise you'll have no way to refer to this control in the server function.**
+
+Most input functions have a **second parameter called `label`**, to assist people understanding the input control.
+
+The **third parameter is typically `value`**, which, where possible, lets you **set the default value**.
+
+The remaining parameters for each control are unique to that specific input control.
+
+It is recommanded by providing the **`inputId` and `label` arguments by position**, and **all other arguments by name**:
+```{r}
+sliderInput("min", "Limit (minimum)", value = 50, min = 0, max = 100)
+```
+
+## Free text
+
+Collect **small amounts of text** with `textInput()`, **passwords** with `passwordInput()` , and **paragraphs of text** with `textAreaInput()`. For example:
+```{r}
+ui <- fluidPage(
+  textInput("name", "What's your name?"),
+  passwordInput("password", "What's your password?"),
+  textAreaInput("story", "Tell me about yourself", rows = 3)
+)
+```
+
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/2-1.png)
+
+You can use `validate()` to check if the text has certain properties, which will be discussed in detail in Chapter 8.
+
+## Numeric inputs
+
+To collect **numeric values**, create a ***constrained text box*** with `numericInput()` or a ***slider*** with `sliderInput()`. If you *supply a length-2 numeric vector for the default value* of `sliderInput()`, you get a ***“range” slider with two ends***.
+
+```{r}
+ui <- fluidPage(
+  numericInput("num", "Number one", value = 0, min = 0, max = 100),
+  sliderInput("num2", "Number two", value = 50, min = 0, max = 100),
+  sliderInput("rng", "Range", value = c(10, 20), min = 0, max = 100)
+)
+```
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/2-2.png)
+
+It is recommanded to only using sliders for small ranges, or cases where the precise value is not so important, as it is not always easy to control a small slider to precisely select a number. 
+
+Sliders are extremely customisable and there are many ways to tweak their appearance. See ?sliderInput and https://shiny.rstudio.com/articles/sliders.html for more details.
+
+## Dates
+
+Collect **a single day** with `dateInput()` or **a range between two days** with `dateRangeInput()`. These provide a convenient calendar picker, and additional arguments like `datesdisabled` and `daysofweekdisabled` allow you to restrict the set of valid inputs.
+
+```{r}
+ui <- fluidPage(
+  dateInput("dob", "When were you born?"),
+  dateRangeInput("holiday", "When do you want to go on vacation next?")
+)
+```
+
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/2-3.png)
+
+The default date that displays is the date one runs the app.
+
+Date format, language, and the day on which the week starts **defaults to US standards**. If you are creating an app with an international audience, set `format`, `language`, and `weekstart` so that the dates are natural to your users.
+
+## Limited choices
+
+There are two different approaches to allow the user to choose from a prespecified set of options: `selectInput()` and `radioButtons()`.
+
+
+
+
+
+
+
+
+
