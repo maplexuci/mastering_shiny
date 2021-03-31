@@ -99,7 +99,152 @@ Date format, language, and the day on which the week starts **defaults to US sta
 
 There are two different approaches to allow the user to choose from a prespecified set of options: `selectInput()` and `radioButtons()`.
 
+```{r}
+animals <- c("dog", "cat", "mouse", "bird", "other", "I hate animals")
+ui <- fluidPage(
+  selectInput("state", "What's your favourite state?", state.name),
+  radioButtons("animal", "What's your favourite animal?", animals)
+)
+```
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/2-4.png)
 
+Radio buttons have two nice features: they show all possible options, making them suitable for short lists, and via the `choiceNames/choiceValues` arguments, they can display options other than plain text. **`choiceNames` determines what is shown to the user; `choiceValues` determines what is returned in your server function**.
+```{r}
+ui <- fluidPage(
+  radioButtons("rb", "Choose one:",
+    choiceNames = list(
+      icon("angry"),
+      icon("smile"),
+      icon("sad-tear")
+    ),
+    choiceValues = list("angry", "happy", "sad")
+  )
+)
+```
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/2-5.png)
+
+Dropdowns created with `selectInput()` take up the same amount of space, regardless of the number of options, making them more **suitable for longer options**. You can also set `multiple = TRUE` to **allow the user to select multiple elements**.
+```{r}
+ui <- fluidPage(
+  selectInput(
+    "state", "What's your favourite state?", state.name,
+    multiple = TRUE
+  )
+)
+```
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/2-6.png)
+
+For very large set of possible options, it would be a good choice to use "server-side" `selectInput()` so that we don't embed the complete set of possible options in the UI, in order to avoid making it slow to load; instead we can send them as needed by the server. To learn more about this advanced topic, go to:
+https://shiny.rstudio.com/articles/selectize.html#server-side-selectize
+
+We can't select multiple values with radio buttons, but we can use `checkboxGroupInput()`
+```{r}
+ui <- fluidPage(
+  checkboxGroupInput("animal", "What animals do you like?", animals)
+)
+```
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/2-7.png)
+
+For a single checkbox for a single yes/no question, we can use `checkboxInput()`
+```{r}
+ui <- fluidPage(
+  checkboxInput("cleanup", "Clean up?", value = TRUE),
+  checkboxInput("shutdown", "Shutdown?")
+)
+```
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/2-8.png)
+
+## File uploads
+
+Allow the user to upload a file with `fileInput()`
+```{r}
+ui <- fluidPage(
+  fileInput("upload", NULL)
+)
+```
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/2-9.png)
+
+`fileInput()` requires special handling on the server side, which will be learned in Chapter 9.
+
+## Action buttons
+
+Let user perform an action using `actionButton()` or `actionLink()`:
+```{r}
+ui <- fluidPage(
+  actionButton("click", "Click me!"),
+  actionButton("drink", "Drink me!", icon = icon("cocktail"))
+)
+```
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/2-10.png)
+
+Action links and buttons are most naturally paired with `observeEvent()` or `eventReactive()` in the server function. We will learn these functions later.
+
+We can customise the buttons using the `class` argument. The `class` argument works by setting the `class` attribute of the underlying HTML, which affects how the element is styled. These values can be assigned to `class` argument: to change the apparance with `"btn-primary"`, `"btn-success"`, `"btn-info"`, `"btn-warning"`, or `"btn-danger"`; to change the size with `"btn-lg"`, `"btn-sm"`, `"btn-xs"` and fianlly to make buttons span the entire width of the element they are embedded within using `"btn-block"`.
+```{r}
+ui <- fluidPage(
+  fluidRow(
+    actionButton("click", "Click me!", class = "btndanger"),
+    actionButton("drink", "Drink me!", class = "btn-lg btnsuccess")
+  ),
+  fluidRow(
+    actionButton("eat", "Eat me!", class = "btn-block")
+  )
+)
+```
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/2-11.png)
+
+## Exercises 1
+
+**1. When space is at a premium, it’s useful to label text boxes using a placeholder that appears *inside* the text entry area. How do you call `textInput()` to generate the UI below?**  
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/E2-1.png)
+
+**Solution:**
+```{r}
+ui <- fluidPage({
+  textInput("name", "", placeholder = "Your name")
+})
+```
+
+**2. Carefully read the documentation for `sliderInput()` to figure out how to create a date slider, as shown below.**  
+![](C:/Users/zhhxu/Documents/R_study/Mastering_Shiny/study_notes/Figures/E2-2.png)
+
+**Solution:**
+```{r}
+ui <- fluidPage({
+  sliderInput("date", "When should we deliver?", min = as.Date("2020-09-16"), 
+              max = as.Date("2020-09-23"), value = as.Date("2020-09-17"), 
+              timeFormat = "%F"
+  )
+})
+```
+
+**3. Create a slider input to select values between 0 and 100 where the interval between each selectable value on the slider is 5. Then, add animation to the input widget so when the user presses play the input widget scrolls through the range automatically.**  
+
+**Solution:**
+```{r}
+ui <- fluidPage({
+  sliderInput("number", "Automatic Number Selector", min = 0, max = 100, 
+              value = 0, step = 5, 
+              animate = animationOptions(interval = 500, loop = TRUE, 
+                                         playButton = "Auto scroll"
+              )
+  )
+})
+```
+
+**4. If you have a moderately long list in a selectInput(), it’s useful to create sub-headings that break the list up into pieces. Read the documentation to figure out how. (Hint: the underlying HTML is called `<optgroup>`.)**  
+
+**Solution:**
+```{r}
+ui <- fluidPage({
+  selectInput("Provience", "Choose a Province:",
+    list('North' = list("YK", "NT", "NU"),
+         'West' = list("BC", "AB", "MB"),
+         'South' = list("ON", "QB"),
+         'East' = list("NL", "NB", "NS", "PEI"))
+  )
+})
+```
 
 
 
