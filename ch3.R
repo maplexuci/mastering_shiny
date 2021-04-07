@@ -54,6 +54,16 @@ ui <- fluidPage(
            numericInput("n", label = "n", value = 1e4, min = 0),
     ),
     column(9, plotOutput("hist1"))
+  ),
+  
+  fluidRow(
+    column(3,
+           numericInput("lambda3", label = "lambda3", value = 3),
+           numericInput("lambda4", label = "lambda4", value = 5),
+           numericInput("number", label = "n", value = 1e4, min = 0),
+           actionButton("simulate", "Simulate")
+    ),
+    column(9, plotOutput("hist2"))
   )
 )
 
@@ -81,6 +91,18 @@ server <- function(input, output,session) {
   
   output$hist1 <- renderPlot({
     freqpoly(x3(), x4(), binwidth = 1, xlim = c(0, 40))
+  })
+  
+  
+  x5 <- eventReactive(input$simulate, {
+    rpois(input$number, input$lambda3)
+  })
+  x6 <- eventReactive(input$simulate,{
+    rpois(input$number, input$lambda4)
+  })
+  
+  output$hist2 <- renderPlot({
+    freqpoly(x5(), x6(), binwidth = 1, xlim = c(0, 40))
   })
 }
 
